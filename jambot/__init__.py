@@ -24,9 +24,9 @@ help_txt = emoji.emojize(
 /find_artists <search_str> - find artists
 /find_albums <search_str> - find albums
 /find_tracks <search_str> - find tracks
-/artists - show favorite user artist list
-/albums - show favorite user album list
-/tracks - show favorite user track list
+/artists - show favorite artist list
+/albums - show favorite album list
+/tracks - show favorite track list
 """
 )
 

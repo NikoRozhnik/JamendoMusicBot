@@ -43,6 +43,27 @@ class JamendoAPIError(JamendoError):
     pass
 
 
+ARTISTS_PATH = "artists"
+ARTISTS_FIELDS = {"id", "name", "website", "image"}
+
+ALBUMS_PATH = "albums"
+ALBUMS_FIELDS = {"id", "name", "artist_id", "artist_name", "image"}
+
+TRACKS_PATH = "tracks"
+TRACKS_FIELDS = {
+    "id",
+    "name",
+    "duration",
+    "position",
+    "album_id",
+    "album_name",
+    "artist_id",
+    "artist_name",
+    "album_image",
+    "audiodownload",
+}
+
+
 class JamendoAPI:
     def __init__(self, client_id, defaults={}):
         if not client_id or not isinstance(client_id, str):
@@ -52,11 +73,13 @@ class JamendoAPI:
             raise ValueError("'defaults' should be dictionary")
         self.defaults = defaults
 
-    def _do_request(self, func_path, params):
+    def _do_request(self, func_path, params, fields):
         if not func_path or not isinstance(func_path, str):
             raise ValueError("'func_path' should be non-empty string")
         if not isinstance(params, dict):
             raise (ValueError("'params' should be dictionary"))
+        if not isinstance(fields, set):
+            raise (ValueError("'fields' should be set instance"))
         prms = {}
         prms.update(self.defaults)
         prms.update(params)
@@ -68,7 +91,10 @@ class JamendoAPI:
         err = headers["code"]
         if err:
             raise JamendoAPIError(err, headers["error_message"])
-        return r.json()["results"]
+        res = []
+        for elem in r.json()["results"]:
+            res.append({key: val for key, val in elem.items() if key in fields})
+        return res
 
     def search_artists(self, search_str, limit=0, offset=0):
         params = {"namesearch": search_str}
@@ -76,7 +102,7 @@ class JamendoAPI:
             params["limit"] = limit
         if offset:
             params["offset"] = offset
-        return self._do_request("artists", params)
+        return self._do_request(ARTISTS_PATH, params, ARTISTS_FIELDS)
 
     def search_albums(self, search_str="", limit=0, offset=0):
         params = {"namesearch": search_str}
@@ -84,7 +110,7 @@ class JamendoAPI:
             params["limit"] = limit
         if offset:
             params["offset"] = offset
-        return self._do_request("albums", params)
+        return self._do_request(ALBUMS_PATH, params, ALBUMS_FIELDS)
 
     def search_tracks(self, search_str="", limit=0, offset=0):
         params = {"namesearch": search_str}
@@ -92,4 +118,12 @@ class JamendoAPI:
             params["limit"] = limit
         if offset:
             params["offset"] = offset
-        return self._do_request("tracks", params)
+        return self._do_request(TRACKS_PATH, params, TRACKS_FIELDS)
+
+    def get_artist_albums(self, artist_id):
+        params = {"artist_id": artist_id}
+        return self._do_request(ALBUMS_PATH, params, ALBUMS_FIELDS)
+
+    def get_album_tracks(self, album_id):
+        params = {"album_id": album_id}
+        return sorted(self._do_request(TRACKS_PATH, params, TRACKS_FIELDS), key=lambda x: x["position"])
