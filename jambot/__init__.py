@@ -5,8 +5,12 @@ from telegram.ext import CommandHandler, Filters, MessageHandler, Updater
 
 from .commands import albums, artists, find_albums, find_artists, find_tracks, tracks
 from .jamendo import JamendoAPI
+from .db import DataBaseAPI
 
 __all__ = ["main"]
+
+
+DB_NAME = "jamendo.db"
 
 wellcome_txt = emoji.emojize(
     """*Wellcome!*
@@ -55,7 +59,7 @@ def main():
         raise ValueError("The TELEGRAM_BOT_TOKEN environment variable was not found.")
 
     _jamAPI = JamendoAPI(CLIENT_ID)
-    _dbAPI = None
+    _dbAPI = DataBaseAPI(DB_NAME)
     updater = Updater(token=BOT_TOKEN, use_context=True)
     dispatcher = updater.dispatcher
     dispatcher.add_handler(CommandHandler("start", start))

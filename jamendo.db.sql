@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS "artists" (
 	"name"	TEXT NOT NULL,
 	"website"	TEXT,
 	"image"	TEXT,
-	PRIMARY KEY("user_id", "id")
+	PRIMARY KEY("user_id","id")
 );
 CREATE TABLE IF NOT EXISTS "albums" (
 	"user_id"	INTEGER NOT NULL,
@@ -29,5 +29,17 @@ CREATE TABLE IF NOT EXISTS "tracks" (
 	"album_image"	TEXT,
 	"audiodownload"	TEXT NOT NULL,
 	PRIMARY KEY("user_id","id")
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "albums_uid_id" ON "albums" (
+	"user_id",
+	"id"
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "artists_uid_id" ON "artists" (
+	"user_id",
+	"id"
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "tracks_uid_id" ON "tracks" (
+	"user_id",
+	"id"
 );
 COMMIT;
