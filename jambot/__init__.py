@@ -2,62 +2,29 @@ import logging
 import os
 from configparser import ConfigParser
 
-import emoji
-from telegram.ext import (  # InvalidCallbackData,
-    CallbackQueryHandler,
-    CommandHandler,
-    Filters,
-    MessageHandler,
-    PicklePersistence,
-    Updater,
-)
+from telegram.ext import CallbackQueryHandler, CommandHandler, PicklePersistence, Updater
 
-from .commands import fav_albums, fav_artists, fav_tracks, find_albums, find_artists, find_tracks, handle_button
+from .commands import fav_albums, fav_artists, fav_tracks, find_albums, find_artists, find_tracks, help, start
 from .commons import commons as c
+from .controls import sign2ctrl
 from .db import DataBaseAPI
 from .jamendo import JamendoAPI
 
 
-__all__ = ["main", "get_variables"]
+__all__ = ["main"]
 
 logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO)
-
 logger = logging.getLogger(__name__)
-
 
 DB_NAME = "jambot.db"
 CONFIG_NAME = "jambot.conf"
 PERISTENCE_NAME = "jambot.persist"
 
-wellcome_txt = emoji.emojize(
-    """*Wellcome!*
 
-I'm *jamendo musical bot* :musical_score:
-
-I will help you find music on [Jamendo Music](http://www.jamendo.com/) and save your favorites artists, albums and tracks
-"""
-)
-
-help_txt = emoji.emojize(
-    """jamendo musical bot :musical_score: commands:
-
-/help - this help
-/artists <search_str> - find artists
-/albums <search_str> - find albums
-/tracks <search_str> - find tracks
-/fav_artists - show favorite artist list
-/fav_albums - show favorite album list
-/fav_tracks - show favorite track list
-"""
-)
-
-
-def start(update, context):
-    context.bot.send_message(chat_id=update.effective_chat.id, text=wellcome_txt, parse_mode="Markdown")
-
-
-def help(update, context):
-    context.bot.send_message(chat_id=update.effective_chat.id, text=help_txt)
+def handle_query(update, context):
+    query = update.callback_query
+    query.answer()
+    sign2ctrl[query.data[0]["sign"]].handle(query)
 
 
 def main():
@@ -89,11 +56,10 @@ def main():
     dispatcher.add_handler(CommandHandler("artists", find_artists))
     dispatcher.add_handler(CommandHandler("albums", find_albums))
     dispatcher.add_handler(CommandHandler("tracks", find_tracks))
-    dispatcher.add_handler(CommandHandler("artists", fav_artists))
-    dispatcher.add_handler(CommandHandler("albums", fav_albums))
-    dispatcher.add_handler(CommandHandler("tracks", fav_tracks))
-    dispatcher.add_handler(MessageHandler(Filters.text & (~Filters.command), find_tracks))
-    dispatcher.add_handler(CallbackQueryHandler(handle_button))
+    dispatcher.add_handler(CommandHandler("fav_artists", fav_artists))
+    dispatcher.add_handler(CommandHandler("fav_albums", fav_albums))
+    dispatcher.add_handler(CommandHandler("fav_tracks", fav_tracks))
+    dispatcher.add_handler(CallbackQueryHandler(handle_query))
     updater.start_polling()
     updater.idle()
 
