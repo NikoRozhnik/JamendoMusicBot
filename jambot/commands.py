@@ -59,21 +59,27 @@ def find_tracks(update, context):
 
 
 def fav_artists(update, context):
-    user_id = update.effective_user["id"]
-    artists = c.dbAPI.get_fav_artists(user_id)
-    artist_list = ArtistList(items=artists, user_id=user_id, list_type=ltFAV)
+    user = update.effective_user
+    id = user["id"]
+    name = user["first_name"] + " " + user["last_name"]
+    artists = c.dbAPI.get_fav_artists(id)
+    artist_list = ArtistList(items=artists, user_id=id, user_name=name, list_type=ltFAV)
     update.message.reply_text(**artist_list.build_message_attrs())
 
 
 def fav_albums(update, context):
-    user_id = update.effective_user["id"]
-    albums = c.dbAPI.get_fav_albums(user_id)
-    album_list = AlbumList(items=albums, user_id=user_id, list_type=ltFAV)
+    user = update.effective_user
+    id = user["id"]
+    name = user["first_name"] + " " + user["last_name"]
+    albums = c.dbAPI.get_fav_albums(id)
+    album_list = AlbumList(items=albums, user_id=id, user_name=name, list_type=ltFAV)
     update.message.reply_text(**album_list.build_message_attrs())
 
 
 def fav_tracks(update, context):
-    user_id = update.effective_user["id"]
-    tracks = c.dbAPI.get_fav_tracks(user_id)
-    track_list = TrackList(items=tracks, user_id=user_id, list_type=ltFAV)
+    user = update.effective_user
+    id = user["id"]
+    name = user["first_name"] + " " + user["last_name"]
+    tracks = c.dbAPI.get_fav_tracks(id)
+    track_list = TrackList(items=tracks, user_id=id, user_name=name, list_type=ltFAV)
     update.message.reply_text(**track_list.build_message_attrs())

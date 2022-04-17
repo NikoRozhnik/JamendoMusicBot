@@ -84,9 +84,16 @@ class BaseList(BaseControl):
         return {"text": self.build_text(), "reply_markup": self.build_keyboard(), "parse_mode": "Markdown"}
 
     def build_text(self):
-        beg_r = self.data["offset"] + 1
-        end_r = self.data["offset"] + self.data["menu_size"]
         total_r = self.data["num_items"]
+        if not total_r:
+            beg_r = 0
+            end_r = 0
+        else:
+            beg_r = self.data["offset"] + 1
+            if total_r < self.data["menu_size"]:
+                end_r = total_r
+            else:
+                end_r = self.data["offset"] + self.data["menu_size"]
         return f"{self.data['title']}\n({beg_r} - {end_r} из {total_r})"
 
     def build_keyboard(self):
@@ -135,6 +142,34 @@ class BaseList(BaseControl):
         return True
 
 
+class AlbumList(BaseList):
+    sign = "AlbumList"
+
+    def __init__(self, data=None, **kwargs):
+        super().__init__(data, **kwargs)
+        if "search_str" in self.data:
+            self.data["title"] = f"Поиск альбомов: *{self.data['search_str']}*"
+        if "user_name" in self.data:
+            self.data["title"] = f"*{self.data['user_name']}.* Избранные альбомы"
+
+    def format_item(self, item):
+        return f"{item['name']} - {item['artist_name']}"
+
+
+class ArtistList(BaseList):
+    sign = "ArtistList"
+
+    def __init__(self, data=None, **kwargs):
+        super().__init__(data, **kwargs)
+        if "search_str" in self.data:
+            self.data["title"] = f"Поиск исполнителей: *{self.data['search_str']}*"
+        if "user_name" in self.data:
+            self.data["title"] = f"*{self.data['user_name']}.* Избранные исполнители"
+
+    def format_item(self, item):
+        return f"{item['name']}"
+
+
 class TrackList(BaseList):
     sign = "TrackList"
 
@@ -142,8 +177,8 @@ class TrackList(BaseList):
         super().__init__(data, **kwargs)
         if "search_str" in self.data:
             self.data["title"] = f"Поиск записей: *{self.data['search_str']}*"
-        if "user_id" in self.data:
-            self.data["title"] = f"Избранные записи: *{self.data['user_id']}*"
+        if "user_name" in self.data:
+            self.data["title"] = f"*{self.data['user_name']}.* Избранные записи"
 
     def format_item(self, item):
         return f"{item['name']} - {item['artist_name']}"
@@ -160,34 +195,6 @@ class TrackList(BaseList):
                 query.bot.send_message(query.message.chat_id, str(button_id))
                 return True
         return False
-
-
-class AlbumList(BaseList):
-    sign = "AlbumList"
-
-    def __init__(self, data=None, **kwargs):
-        super().__init__(data, **kwargs)
-        if "search_str" in self.data:
-            self.data["title"] = f"*Поиск альбомов:* _{self.data['search_str']}_"
-        if "user_id" in self.data:
-            self.data["title"] = f"Избранные альбомы: *{self.data['user_id']}*"
-
-    def format_item(self, item):
-        return f"{item['name']} - {item['artist_name']}"
-
-
-class ArtistList(BaseList):
-    sign = "ArtistList"
-
-    def __init__(self, data=None, **kwargs):
-        super().__init__(data, **kwargs)
-        if "search_str" in self.data:
-            self.data["title"] = f"*Поиск исполнителей:* _{self.data['search_str']}_"
-        if "user_id" in self.data:
-            self.data["title"] = f"Избранные исполнители: *{self.data['user_id']}*"
-
-    def format_item(self, item):
-        return f"{item['name']}"
 
 
 class ArtistAlbums(BaseList):
