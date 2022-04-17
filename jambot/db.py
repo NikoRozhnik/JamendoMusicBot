@@ -92,11 +92,11 @@ class DataBaseAPI:
     def del_fav_track(self, user_id, id):
         self._do_del_one("tracks", user_id, id)
 
-    def has_fav_artist(self, user_id, id):
+    def is_fav_artist(self, user_id, id):
         return self._do_has_one("artists", user_id, id)
 
-    def has_fav_album(self, user_id, id):
+    def is_fav_album(self, user_id, id):
         return self._do_has_one("albums", user_id, id)
 
-    def has_fav_track(self, user_id, id):
+    def is_fav_track(self, user_id, id):
         return self._do_has_one("tracks", user_id, id)

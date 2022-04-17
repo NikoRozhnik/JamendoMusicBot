@@ -1,6 +1,9 @@
 import emoji
+import requests
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
+from .commons import commons as c
+from .utils import get_thumb
 
 _sign2ctrl = {}
 
@@ -14,6 +17,7 @@ MENU_NEXT = -3
 MENU_LAST = -4
 MENU_CLOSE = -5
 MENU_FAV = -6
+MENU_UNFAV = -7
 
 
 def get_object(data):
@@ -57,15 +61,38 @@ class Track(BaseControl):
 
     def init(self, data=None, **kwargs):
         super().__init__(data, **kwargs)
-        # XXX
 
     def handle(self, query):
         if not super().handle(query):
-            if self.get_button_id(query) == MENU_FAV:
-                # XXX
+            button_id = self.get_button_id(query)
+            user_id = query.from_user.id
+            if button_id == MENU_FAV:
+                c.dbAPI.add_fav_track(user_id, self.data)
+                return True
+            elif button_id == MENU_UNFAV:
+                c.dbAPI.del_fav_track(user_id, self.data["id"])
                 return True
             else:
                 return False
+
+    def build_keyboard(self):
+        return InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(emoji.emojize(":heart_suit:"), callback_data=(self.data, MENU_FAV)),
+                    InlineKeyboardButton(emoji.emojize(":broken_heart:"), callback_data=(self.data, MENU_UNFAV)),
+                    InlineKeyboardButton(emoji.emojize(":cross_mark:"), callback_data=(self.data, MENU_CLOSE)),
+                ]
+            ]
+        )
+
+    def build_message_attrs(self):
+        return {
+            "audio": self.data["audiodownload"],
+            "duration": self.data["duration"],
+            "thumb": get_thumb(self.data["album_image"]),
+            "reply_markup": self.build_keyboard(),
+        }
 
 
 class BaseList(BaseControl):
@@ -189,10 +216,8 @@ class TrackList(BaseList):
         else:
             button_id = self.get_button_id(query)
             if button_id >= 0:
-                # XXX
-                # track = Track()
-                # attrs = track.build_message_attrs()
-                query.bot.send_message(query.message.chat_id, str(button_id))
+                track = Track(**self.data["items"][self.data["offset"] + button_id])
+                query.bot.send_audio(query.message.chat_id, **track.build_message_attrs())
                 return True
         return False
 

@@ -54,7 +54,6 @@ def find_tracks(update, context):
     search_str = " ".join(context.args)
     tracks = c.jamAPI.search_tracks(context.args)
     track_list = TrackList(items=tracks, search_str=search_str, list_type=ltFIND)
-    print(track_list.build_message_attrs())
     update.message.reply_text(**track_list.build_message_attrs())
 
 

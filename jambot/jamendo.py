@@ -118,7 +118,9 @@ class JamendoAPI:
             params["limit"] = limit
         if offset:
             params["offset"] = offset
-        return self._do_request(TRACKS_PATH, params, TRACKS_FIELDS)
+        res = self._do_request(TRACKS_PATH, params, TRACKS_FIELDS)
+        # check url for download track present
+        return [r for r in res if r["audiodownload"]]
 
     def get_artist_albums(self, artist_id):
         params = {"artist_id": artist_id}
