@@ -40,21 +40,21 @@ def find_artists(update, context):
     search_str = " ".join(context.args)
     artists = c.jamAPI.search_artists(context.args)
     artist_list = ArtistList(items=artists, search_str=search_str, list_type=ltFIND)
-    update.message.reply_text(**artist_list.build_message_attrs())
+    context.bot.send_message(update.effective_chat.id, **artist_list.build_message_attrs())
 
 
 def find_albums(update, context):
     search_str = " ".join(context.args)
     albums = c.jamAPI.search_albums(context.args)
     album_list = AlbumList(items=albums, search_str=search_str, list_type=ltFIND)
-    update.message.reply_text(**album_list.build_message_attrs())
+    context.bot.send_message(update.effective_chat.id, **album_list.build_message_attrs())
 
 
 def find_tracks(update, context):
     search_str = " ".join(context.args)
     tracks = c.jamAPI.search_tracks(context.args)
     track_list = TrackList(items=tracks, search_str=search_str, list_type=ltFIND)
-    update.message.reply_text(**track_list.build_message_attrs())
+    context.bot.send_message(update.effective_chat.id, **track_list.build_message_attrs())
 
 
 def fav_artists(update, context):
@@ -63,7 +63,7 @@ def fav_artists(update, context):
     name = user["first_name"] + " " + user["last_name"]
     artists = c.dbAPI.get_fav_artists(id)
     artist_list = ArtistList(items=artists, user_id=id, user_name=name, list_type=ltFAV)
-    update.message.reply_text(**artist_list.build_message_attrs())
+    context.bot.send_message(update.effective_chat.id, **artist_list.build_message_attrs())
 
 
 def fav_albums(update, context):
@@ -72,7 +72,7 @@ def fav_albums(update, context):
     name = user["first_name"] + " " + user["last_name"]
     albums = c.dbAPI.get_fav_albums(id)
     album_list = AlbumList(items=albums, user_id=id, user_name=name, list_type=ltFAV)
-    update.message.reply_text(**album_list.build_message_attrs())
+    context.bot.send_message(update.effective_chat.id, **album_list.build_message_attrs())
 
 
 def fav_tracks(update, context):
@@ -81,4 +81,4 @@ def fav_tracks(update, context):
     name = user["first_name"] + " " + user["last_name"]
     tracks = c.dbAPI.get_fav_tracks(id)
     track_list = TrackList(items=tracks, user_id=id, user_name=name, list_type=ltFAV)
-    update.message.reply_text(**track_list.build_message_attrs())
+    context.bot.send_message(update.effective_chat.id, **track_list.build_message_attrs())
