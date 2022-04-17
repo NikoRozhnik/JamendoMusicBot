@@ -2,7 +2,7 @@ import emoji
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
 
-sign2ctrl = {}
+_sign2ctrl = {}
 
 # тип списка (поиск или избранные - разные заголовки)
 ltFIND = 0
@@ -13,136 +13,150 @@ MENU_PREV = -2
 MENU_NEXT = -3
 MENU_LAST = -4
 MENU_CLOSE = -5
+MENU_FAV = -6
+
+
+def get_object(data):
+    global _sign2ctrl
+    return _sign2ctrl[data["sign"]](data)
 
 
 class BaseControl:
     sign = ""
 
-    @classmethod
-    def create(cls, **kw_args):
-        kw_args["sign"] = cls.sign
-        return dict(kw_args)
+    def __init__(self, data=None, **kwargs):
+        if data:
+            self.data = data
+        else:
+            self.data = {}
+        for k, v in kwargs.items():
+            if k not in self.data:
+                self.data[k] = v
+        self.data["sign"] = self.sign
 
-    @classmethod
-    def handle(cls, query):
-        data, button_id = query.data
-        if button_id == MENU_CLOSE:
+    def get_data(self):
+        return self.data
+
+    @staticmethod
+    def get_button_id(query):
+        return query.data[1]
+
+    def handle(self, query):
+        if self.get_button_id(query) == MENU_CLOSE:
             query.delete_message()
             return True
         else:
             return False
 
-    @classmethod
-    def build_message_attrs(cls, data):
+    def build_message_attrs(self):
         return {}
 
 
 class Track(BaseControl):
     sign = "Track"
 
-    @classmethod
-    def create(cls, **kw_args):
-        pass
+    def init(self, data=None, **kwargs):
+        super().__init__(data, **kwargs)
+        # XXX
 
-    @classmethod
-    def handle(cls, query):
-        pass
+    def handle(self, query):
+        if not super().handle(query):
+            if self.get_button_id(query) == MENU_FAV:
+                # XXX
+                return True
+            else:
+                return False
 
 
 class BaseList(BaseControl):
-    @classmethod
-    def create(cls, **kw_args):
-        kw_args["offset"] = 0
-        kw_args["num_items"] = len(kw_args["items"])
-        if "menu_size" not in kw_args:
-            kw_args["menu_size"] = 10
-        return super().create(**kw_args)
+    def __init__(self, data=None, **kwargs):
+        super().__init__(data, **kwargs)
+        if "offset" not in self.data:
+            self.data["offset"] = 0
+        self.data["num_items"] = len(self.data["items"])
+        if "menu_size" not in self.data:
+            self.data["menu_size"] = 10
 
-    @classmethod
-    def format_item(cls, item):
-        return item["name"]
+    def format_item(self, item):
+        return ""
 
-    @classmethod
-    def build_message_attrs(cls, data):
-        return {"text": cls.build_text(data), "reply_markup": cls.build_keyboard(data), "parse_mode": "Markdown"}
+    def build_message_attrs(self):
+        return {"text": self.build_text(), "reply_markup": self.build_keyboard(), "parse_mode": "Markdown"}
 
-    @classmethod
-    def build_text(cls, data):
-        beg_r = data["offset"] + 1
-        end_r = data["offset"] + data["menu_size"]
-        total_r = data["num_items"]
-        return f"{data['title']}\n({beg_r} - {end_r} из {total_r})"
+    def build_text(self):
+        beg_r = self.data["offset"] + 1
+        end_r = self.data["offset"] + self.data["menu_size"]
+        total_r = self.data["num_items"]
+        return f"{self.data['title']}\n({beg_r} - {end_r} из {total_r})"
 
-    @classmethod
-    def build_keyboard(cls, data):
+    def build_keyboard(self):
         btns = []
-        for i in range(min(data["menu_size"], data["num_items"])):
-            name = cls.format_item(data["items"][data["offset"] + i])
-            btns.append([InlineKeyboardButton(name, callback_data=(data, i))])
-        btns.append(cls.build_ctrl_buttons(data))
+        for i in range(min(self.data["menu_size"], self.data["num_items"])):
+            offset = self.data["offset"] + i
+            name = self.format_item(self.data["items"][offset])
+            btns.append([InlineKeyboardButton(f"{offset+1}. {name}", callback_data=(self.data, i))])
+        btns.append(self.build_ctrl_buttons())
         return InlineKeyboardMarkup(btns)
 
-    @classmethod
-    def build_ctrl_buttons(cls, data):
+    def build_ctrl_buttons(self):
         return [
-            InlineKeyboardButton(emoji.emojize(":last_track_button:"), callback_data=(data, MENU_FIRST)),
-            InlineKeyboardButton(emoji.emojize(":reverse_button:"), callback_data=(data, MENU_PREV)),
-            InlineKeyboardButton(emoji.emojize(":play_button:"), callback_data=(data, MENU_NEXT)),
-            InlineKeyboardButton(emoji.emojize(":next_track_button:"), callback_data=(data, MENU_LAST)),
-            InlineKeyboardButton(emoji.emojize(":cross_mark:"), callback_data=(data, MENU_CLOSE)),
+            InlineKeyboardButton(emoji.emojize(":last_track_button:"), callback_data=(self.data, MENU_FIRST)),
+            InlineKeyboardButton(emoji.emojize(":reverse_button:"), callback_data=(self.data, MENU_PREV)),
+            InlineKeyboardButton(emoji.emojize(":play_button:"), callback_data=(self.data, MENU_NEXT)),
+            InlineKeyboardButton(emoji.emojize(":next_track_button:"), callback_data=(self.data, MENU_LAST)),
+            InlineKeyboardButton(emoji.emojize(":cross_mark:"), callback_data=(self.data, MENU_CLOSE)),
         ]
 
-    @classmethod
     def handle(self, query):
         if not super().handle(query):
-            data, button_id = query.data
+            button_id = self.get_button_id(query)
             if button_id >= 0:
                 return False
             elif button_id == MENU_CLOSE:
                 query.delete_message()
             else:
                 if button_id == MENU_FIRST:
-                    data["offset"] = 0
+                    self.data["offset"] = 0
                 if button_id == MENU_PREV:
-                    data["offset"] -= data["menu_size"]
-                    if data["offset"] < 0:
-                        data["offset"] = 0
+                    self.data["offset"] -= self.data["menu_size"]
+                    if self.data["offset"] < 0:
+                        self.data["offset"] = 0
                 if button_id == MENU_NEXT:
-                    data["offset"] += data["menu_size"]
-                    if data["offset"] + data["menu_size"] > data["num_items"]:
-                        data["offset"] = data["num_items"] - data["menu_size"]
-                        if data["offset"] < 0:
-                            data["offset"] = 0
+                    self.data["offset"] += self.data["menu_size"]
+                    if self.data["offset"] + self.data["menu_size"] > self.data["num_items"]:
+                        self.data["offset"] = self.data["num_items"] - self.data["menu_size"]
+                        if self.data["offset"] < 0:
+                            self.data["offset"] = 0
                 elif button_id == MENU_LAST:
-                    data["offset"] = data["num_items"] - data["menu_size"]
-                    if data["offset"] < 0:
-                        data["offset"] = 0
-                query.edit_message_text(**cls.build_message_attrs(data))
+                    self.data["offset"] = self.data["num_items"] - self.data["menu_size"]
+                    if self.data["offset"] < 0:
+                        self.data["offset"] = 0
+                query.edit_message_text(**self.build_message_attrs())
         return True
 
 
 class TrackList(BaseList):
     sign = "TrackList"
 
-    @classmethod
-    def create(cls, **kw_args):
-        if "search_str" in kw_args:
-            kw_args["title"] = f"Поиск записей: *{kw_args['search_str']}*"
-        if "user_id" in kw_args:
-            kw_args["title"] = f"Избранные записи: *{kw_args['user_id']}*"
-        return super().create(**kw_args)
+    def __init__(self, data=None, **kwargs):
+        super().__init__(data, **kwargs)
+        if "search_str" in self.data:
+            self.data["title"] = f"Поиск записей: *{self.data['search_str']}*"
+        if "user_id" in self.data:
+            self.data["title"] = f"Избранные записи: *{self.data['user_id']}*"
 
-    @classmethod
-    def format_item(cls, item):
+    def format_item(self, item):
         return f"{item['name']} - {item['artist_name']}"
 
-    @classmethod
     def handle(self, query):
         if super().handle(query):
             return True
         else:
-            data, button_id = query.data
+            button_id = self.get_button_id(query)
             if button_id >= 0:
+                # XXX
+                # track = Track()
+                # attrs = track.build_message_attrs()
                 query.bot.send_message(query.message.chat_id, str(button_id))
                 return True
         return False
@@ -151,42 +165,38 @@ class TrackList(BaseList):
 class AlbumList(BaseList):
     sign = "AlbumList"
 
-    @classmethod
-    def create(cls, **kw_args):
-        if "search_str" in kw_args:
-            kw_args["title"] = f"*Поиск альбомов:* _{kw_args['search_str']}_"
-        if "user_id" in kw_args:
-            kw_args["title"] = f"Избранные альбомы: *{kw_args['user_id']}*"
-        return super().create(**kw_args)
+    def __init__(self, data=None, **kwargs):
+        super().__init__(data, **kwargs)
+        if "search_str" in self.data:
+            self.data["title"] = f"*Поиск альбомов:* _{self.data['search_str']}_"
+        if "user_id" in self.data:
+            self.data["title"] = f"Избранные альбомы: *{self.data['user_id']}*"
 
-    @classmethod
-    def format_item(cls, item):
-        return ""
+    def format_item(self, item):
+        return f"{item['name']} - {item['artist_name']}"
 
 
 class ArtistList(BaseList):
     sign = "ArtistList"
 
-    @classmethod
-    def create(cls, **kw_args):
-        if "search_str" in kw_args:
-            kw_args["title"] = f"*Поиск исполнителей:* _{kw_args['search_str']}_"
-        if "user_id" in kw_args:
-            kw_args["title"] = f"Избранные исполнители: *{kw_args['user_id']}*"
-        return super().create(**kw_args)
+    def __init__(self, data=None, **kwargs):
+        super().__init__(data, **kwargs)
+        if "search_str" in self.data:
+            self.data["title"] = f"*Поиск исполнителей:* _{self.data['search_str']}_"
+        if "user_id" in self.data:
+            self.data["title"] = f"Избранные исполнители: *{self.data['user_id']}*"
 
-    @classmethod
-    def format_item(cls, item):
-        return ""
+    def format_item(self, item):
+        return f"{item['name']}"
 
 
 class ArtistAlbums(BaseList):
-    pass
+    sign = "ArtistAlbums"
 
 
 class AlbumTracks(BaseList):
-    pass
+    sign = "AlbumTracks"
 
 
 for cls in (Track, TrackList, AlbumList, ArtistList, ArtistAlbums, AlbumTracks):
-    sign2ctrl[cls.sign] = cls
+    _sign2ctrl[cls.sign] = cls

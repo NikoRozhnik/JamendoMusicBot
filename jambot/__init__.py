@@ -6,7 +6,7 @@ from telegram.ext import CallbackQueryHandler, CommandHandler, PicklePersistence
 
 from .commands import fav_albums, fav_artists, fav_tracks, find_albums, find_artists, find_tracks, help, start
 from .commons import commons as c
-from .controls import sign2ctrl
+from .controls import get_object
 from .db import DataBaseAPI
 from .jamendo import JamendoAPI
 
@@ -24,7 +24,7 @@ PERISTENCE_NAME = "jambot.persist"
 def handle_query(update, context):
     query = update.callback_query
     query.answer()
-    sign2ctrl[query.data[0]["sign"]].handle(query)
+    get_object(query.data[0]).handle(query)
 
 
 def main():
