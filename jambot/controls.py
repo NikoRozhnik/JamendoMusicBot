@@ -13,7 +13,6 @@ MENU_PREV = -2
 MENU_NEXT = -3
 MENU_LAST = -4
 MENU_CLOSE = -5
-NAV_BUTTONS = (MENU_FIRST, MENU_PREV, MENU_NEXT, MENU_LAST, MENU_CLOSE)
 
 
 class BaseControl:
@@ -53,7 +52,6 @@ class Track(BaseControl):
 class BaseList(BaseControl):
     @classmethod
     def create(cls, **kw_args):
-        print("!!", kw_args)
         kw_args["offset"] = 0
         kw_args["num_items"] = len(kw_args["items"])
         if "menu_size" not in kw_args:
@@ -78,7 +76,7 @@ class BaseList(BaseControl):
     @classmethod
     def build_keyboard(cls, data):
         btns = []
-        for i in range(data["menu_size"]):
+        for i in range(min(data["menu_size"], data["num_items"])):
             name = cls.format_item(data["items"][data["offset"] + i])
             btns.append([InlineKeyboardButton(name, callback_data=(data, i))])
         btns.append(cls.build_ctrl_buttons(data))
@@ -103,6 +101,22 @@ class BaseList(BaseControl):
             elif button_id == MENU_CLOSE:
                 query.delete_message()
             else:
+                if button_id == MENU_FIRST:
+                    data["offset"] = 0
+                if button_id == MENU_PREV:
+                    data["offset"] -= data["menu_size"]
+                    if data["offset"] < 0:
+                        data["offset"] = 0
+                if button_id == MENU_NEXT:
+                    data["offset"] += data["menu_size"]
+                    if data["offset"] + data["menu_size"] > data["num_items"]:
+                        data["offset"] = data["num_items"] - data["menu_size"]
+                        if data["offset"] < 0:
+                            data["offset"] = 0
+                elif button_id == MENU_LAST:
+                    data["offset"] = data["num_items"] - data["menu_size"]
+                    if data["offset"] < 0:
+                        data["offset"] = 0
                 query.edit_message_text(**cls.build_message_attrs(data))
         return True
 
