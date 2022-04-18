@@ -11,7 +11,8 @@ wellcome_txt = emoji.emojize(
 
 Я помогу тебе искать музыку на [Jamendo Music](http://www.jamendo.com/)
  и сохранять списки любимых исполнителей, альбомов и записей
-"""
+
+ Для получения справки введи команду /help"""
 )
 
 help_txt = emoji.emojize(
@@ -23,8 +24,7 @@ help_txt = emoji.emojize(
 /tracks <search_str> - найти записи
 /fav_artists - список избранных исполнителей
 /fav_albums - список избранных альбомов
-/fav_tracks - список избранныз команд
-"""
+/fav_tracks - список избранных записей"""
 )
 
 
@@ -60,7 +60,9 @@ def find_tracks(update, context):
 def fav_artists(update, context):
     user = update.effective_user
     id = user["id"]
-    name = user["first_name"] + " " + user["last_name"]
+    name = user["first_name"]
+    if user["last_name"]:
+        name += " " + user["last_name"]
     artists = c.dbAPI.get_fav_artists(id)
     artist_list = ArtistList(items=artists, user_id=id, user_name=name, list_type=ltFAV)
     context.bot.send_message(update.effective_chat.id, **artist_list.build_message_attrs())
@@ -69,7 +71,9 @@ def fav_artists(update, context):
 def fav_albums(update, context):
     user = update.effective_user
     id = user["id"]
-    name = user["first_name"] + " " + user["last_name"]
+    name = user["first_name"]
+    if user["last_name"]:
+        name += " " + user["last_name"]
     albums = c.dbAPI.get_fav_albums(id)
     album_list = AlbumList(items=albums, user_id=id, user_name=name, list_type=ltFAV)
     context.bot.send_message(update.effective_chat.id, **album_list.build_message_attrs())
@@ -78,7 +82,9 @@ def fav_albums(update, context):
 def fav_tracks(update, context):
     user = update.effective_user
     id = user["id"]
-    name = user["first_name"] + " " + user["last_name"]
+    name = user["first_name"]
+    if user["last_name"]:
+        name += " " + user["last_name"]
     tracks = c.dbAPI.get_fav_tracks(id)
     track_list = TrackList(items=tracks, user_id=id, user_name=name, list_type=ltFAV)
     context.bot.send_message(update.effective_chat.id, **track_list.build_message_attrs())
