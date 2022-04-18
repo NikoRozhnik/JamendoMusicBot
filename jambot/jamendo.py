@@ -128,4 +128,7 @@ class JamendoAPI:
 
     def get_album_tracks(self, album_id):
         params = {"album_id": album_id}
-        return sorted(self._do_request(TRACKS_PATH, params, TRACKS_FIELDS), key=lambda x: x["position"])
+        res = self._do_request(TRACKS_PATH, params, TRACKS_FIELDS)
+        # check url for download track present
+        non_empty = [r for r in res if r["audiodownload"]]
+        return sorted(non_empty, key=lambda x: x["position"])
