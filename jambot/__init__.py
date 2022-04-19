@@ -16,9 +16,9 @@ __all__ = ["main"]
 logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-DB_NAME = "jambot.db"
 CONFIG_NAME = "jambot.conf"
-PERISTENCE_NAME = "jambot.persist"
+DB_NAME = "db/jambot.db"
+PERISTENCE_NAME = "db/jambot.persist"
 
 
 def handle_query(update, context):
